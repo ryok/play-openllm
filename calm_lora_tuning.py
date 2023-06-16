@@ -14,12 +14,6 @@ output_dir = "lora-calm-7b-results"
 
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 
-print(tokenizer.special_tokens_map)
-print("bos_token :", tokenizer.eos_token, ",", tokenizer.bos_token_id)
-print("eos_token :", tokenizer.bos_token, ",", tokenizer.eos_token_id)
-print("unk_token :", tokenizer.unk_token, ",", tokenizer.unk_token_id)
-print("pad_token :", tokenizer.pad_token, ",", tokenizer.pad_token_id)
-
 CUTOFF_LEN = 256  # 最大長
 
 # トークナイズ関数の定義
@@ -59,6 +53,13 @@ def generate_prompt(data_point):
 
 
 if __name__ == '__main__':
+
+    print(tokenizer.special_tokens_map)
+    print("bos_token :", tokenizer.eos_token, ",", tokenizer.bos_token_id)
+    print("eos_token :", tokenizer.bos_token, ",", tokenizer.eos_token_id)
+    print("unk_token :", tokenizer.unk_token, ",", tokenizer.unk_token_id)
+    print("pad_token :", tokenizer.pad_token, ",", tokenizer.pad_token_id)
+
 
     # トークナイズの動作確認
     print(tokenize("hi there", tokenizer))
