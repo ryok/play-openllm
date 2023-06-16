@@ -1,0 +1,13 @@
+datasets
+tokenizers>=0.13.2
+prompt_toolkit
+#numpy
+#torch
+transformers
+accelerate
+sentencepiece
+colorama
+scipy
+git+https://github.com/huggingface/peft.git
+bitsandbytes
+pysen[lint]
