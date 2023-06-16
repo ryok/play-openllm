@@ -1,9 +1,7 @@
-from datasets import load_dataset
-from transformers import AutoTokenizer
-from transformers import AutoModelForCausalLM
 import transformers
-from peft import LoraConfig, get_peft_model, prepare_model_for_int8_training, TaskType
-
+from datasets import load_dataset
+from peft import LoraConfig, TaskType, get_peft_model, prepare_model_for_int8_training
+from transformers import AutoModelForCausalLM, AutoTokenizer
 
 # 基本パラメータ
 model_name = "cyberagent/open-calm-7b"
@@ -19,7 +17,7 @@ CUTOFF_LEN = 256  # 最大長
 # トークナイズ関数の定義
 def tokenize(prompt, tokenizer):
     result = tokenizer(
-        prompt+"<|endoftext|>",  # EOSの付加
+        prompt + "<|endoftext|>",  # EOSの付加
         truncation=True,
         max_length=CUTOFF_LEN,
         padding=False,
@@ -28,6 +26,7 @@ def tokenize(prompt, tokenizer):
         "input_ids": result["input_ids"],
         "attention_mask": result["attention_mask"],
     }
+
 
 # プロンプトテンプレートの準備
 def generate_prompt(data_point):
@@ -52,7 +51,7 @@ def generate_prompt(data_point):
 {data_point["output"]}"""
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     print(tokenizer.special_tokens_map)
     print("bos_token :", tokenizer.eos_token, ",", tokenizer.bos_token_id)
@@ -60,10 +59,8 @@ if __name__ == '__main__':
     print("unk_token :", tokenizer.unk_token, ",", tokenizer.unk_token_id)
     print("pad_token :", tokenizer.pad_token, ",", tokenizer.pad_token_id)
 
-
     # トークナイズの動作確認
     print(tokenize("hi there", tokenizer))
-
 
     # データセットの準備
     data = load_dataset(dataset)
@@ -82,9 +79,10 @@ if __name__ == '__main__':
     )
     train_data = train_val["train"]
     val_data = train_val["test"]
-    train_data = train_data.shuffle().map(lambda x: tokenize(generate_prompt(x), tokenizer))
+    train_data = train_data.shuffle().map(
+        lambda x: tokenize(generate_prompt(x), tokenizer)
+    )
     val_data = val_data.shuffle().map(lambda x: tokenize(generate_prompt(x), tokenizer))
-
 
     # モデルの準備
     model = AutoModelForCausalLM.from_pretrained(
@@ -95,12 +93,12 @@ if __name__ == '__main__':
 
     # LoRAのパラメータ
     lora_config = LoraConfig(
-        r= 8, 
+        r=8,
         lora_alpha=16,
         target_modules=["query_key_value"],
         lora_dropout=0.05,
         bias="none",
-        task_type=TaskType.CAUSAL_LM
+        task_type=TaskType.CAUSAL_LM,
     )
 
     # モデルの前処理
@@ -111,7 +109,6 @@ if __name__ == '__main__':
 
     # 学習可能パラメータの確認
     model.print_trainable_parameters()
-
 
     eval_steps = 200
     save_steps = 200
@@ -134,14 +131,16 @@ if __name__ == '__main__':
             report_to="none",
             save_total_limit=3,
             push_to_hub=False,
-            auto_find_batch_size=True
+            auto_find_batch_size=True,
         ),
-        data_collator=transformers.DataCollatorForLanguageModeling(tokenizer, mlm=False),
+        data_collator=transformers.DataCollatorForLanguageModeling(
+            tokenizer, mlm=False
+        ),
     )
 
     # 学習の実行
     model.config.use_cache = False
-    trainer.train() 
+    trainer.train()
     model.config.use_cache = True
 
     # LoRAモデルの保存
